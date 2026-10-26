@@ -3,69 +3,222 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Dashboard</title>
+  <title>Analytics & Tools Dashboard</title>
+  <!-- FontAwesome Icons for modern icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f3f5f4; }
-    .navbar {
-      background: #1c2528;
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      overflow: hidden;
+    }
+    
+    /* Top Professional Navigation Header */
+    .header {
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
       display: flex;
-      gap: 8px;
-      padding: 10px 16px;
-      overflow-x: auto;
-      border-bottom: 2px solid #2f6f75;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: 60px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 16px;
+      color: #38bdf8;
+      letter-spacing: 0.5px;
+    }
+    
+    .brand i {
+      font-size: 18px;
+    }
+
+    /* Tabs Bar */
+    .navbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      height: 100%;
+    }
+    
     .tab-btn {
-      background: #2c3739;
-      color: #9aa9ab;
+      background: transparent;
+      color: #94a3b8;
       border: none;
-      padding: 10px 20px;
-      font-size: 14px;
+      padding: 10px 18px;
+      font-size: 13.5px;
       font-weight: 600;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       white-space: nowrap;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .tab-btn:hover { background: #3a484b; color: #fff; }
-    .tab-btn.active { background: #2f6f75; color: #ffffff; }
-    .tab-content { display: none; width: 100%; height: calc(100vh - 55px); }
-    .tab-content.active { display: block; }
-    iframe { width: 100%; height: 100%; border: none; }
+    
+    .tab-btn i {
+      font-size: 14px;
+      color: #64748b;
+      transition: color 0.25s ease;
+    }
+    
+    .tab-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #f1f5f9;
+    }
+
+    .tab-btn:hover i {
+      color: #38bdf8;
+    }
+    
+    .tab-btn.active {
+      background: #0284c7;
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+    }
+
+    .tab-btn.active i {
+      color: #ffffff;
+    }
+
+    .tab-badge {
+      background: rgba(255, 255, 255, 0.15);
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    /* Tab Content Frame */
+    .tab-content { 
+      display: none; 
+      width: 100%; 
+      height: calc(100vh - 60px); 
+    }
+
+    .tab-content.active { 
+      display: block; 
+    }
+
+    iframe { 
+      width: 100%; 
+      height: 100%; 
+      border: none; 
+      background: #ffffff;
+    }
+    
+    /* Placeholder for Coming Soon Tabs */
     .coming-soon {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100%;
-      color: #59666a;
-      font-size: 18px;
-      font-weight: 500;
+      background: #0f172a;
+      color: #94a3b8;
+      gap: 16px;
+      text-align: center;
+    }
+
+    .coming-soon-icon {
+      width: 64px;
+      height: 64px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: #38bdf8;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .coming-soon h2 {
+      color: #f8fafc;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .coming-soon p {
+      font-size: 14px;
+      color: #64748b;
+      max-width: 320px;
     }
   </style>
 </head>
 <body>
 
-  <div class="navbar">
-    <button class="tab-btn active" onclick="openTab(event, 'tab-kpi')">PJP KPI Report</button>
-    <button class="tab-btn" onclick="openTab(event, 'tab-project2')">Project 2 (Coming Soon)</button>
-  </div>
+  <!-- Top Header Bar -->
+  <header class="header">
+    <div class="brand">
+      <i class="fa-solid fa-chart-line"></i>
+      <span>KPO Analytics</span>
+    </div>
 
+    <!-- Navigation Tabs -->
+    <nav class="navbar">
+      <button class="tab-btn active" onclick="openTab(event, 'tab-kpi')">
+        <i class="fa-solid fa-file-invoice"></i> PJP KPI Report
+      </button>
+      
+      <button class="tab-btn" onclick="openTab(event, 'tab-project2')">
+        <i class="fa-solid fa-layer-group"></i> Project 2 <span class="tab-badge">Soon</span>
+      </button>
+      
+      <button class="tab-btn" onclick="openTab(event, 'tab-project3')">
+        <i class="fa-solid fa-cubes"></i> Project 3 <span class="tab-badge">Soon</span>
+      </button>
+    </nav>
+  </header>
+
+  <!-- Tab 1: PJP KPI Report -->
   <div id="tab-kpi" class="tab-content active">
     <iframe src="kpi-tool.html"></iframe>
   </div>
 
+  <!-- Tab 2: Coming Soon -->
   <div id="tab-project2" class="tab-content">
     <div class="coming-soon">
-      <p>🚀 Project 2 is Coming Soon. Stay tuned!</p>
+      <div class="coming-soon-icon">
+        <i class="fa-solid fa-microchip"></i>
+      </div>
+      <h2>Project 2 Under Development</h2>
+      <p>This space is reserved for your next reporting tool or analytical web application.</p>
+    </div>
+  </div>
+
+  <!-- Tab 3: Coming Soon -->
+  <div id="tab-project3" class="tab-content">
+    <div class="coming-soon">
+      <div class="coming-soon-icon">
+        <i class="fa-solid fa-chart-pie"></i>
+      </div>
+      <h2>Project 3 Under Development</h2>
+      <p>Another exciting automation feature will be available here soon.</p>
     </div>
   </div>
 
   <script>
     function openTab(evt, tabName) {
       var contents = document.getElementsByClassName("tab-content");
-      for (var i = 0; i < contents.length; i++) { contents[i].classList.remove("active"); }
+      for (var i = 0; i < contents.length; i++) {
+        contents[i].classList.remove("active");
+      }
       var buttons = document.getElementsByClassName("tab-btn");
-      for (var i = 0; i < buttons.length; i++) { buttons[i].classList.remove("active"); }
+      for (var i = 0; i < buttons.length; i++) {
+        buttons[i].classList.remove("active");
+      }
       document.getElementById(tabName).classList.add("active");
       evt.currentTarget.classList.add("active");
     }
