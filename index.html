@@ -1,500 +1,74 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>KPI Report Maker</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Carlito:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<style>
-/* Layout: one narrow column. Upload, then highlight rules, then a live preview of the report image with the save button under it. */
-:root {
-  --bg: #f3f5f4;
-  --surface: #ffffff;
-  --fg: #1c2528;
-  --muted: #59666a;
-  --line: #d6dcda;
-  --accent: #2f6f75;
-  --accent-fg: #ffffff;
-  --red-bg: #ffc7ce;
-  --red-fg: #9c0006;
-  --green-bg: #c6efce;
-  --green-fg: #006100;
-  --focus: #1f6feb;
-  --ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #111718;
-    --surface: #1a2224;
-    --fg: #e5ebeb;
-    --muted: #9aa9ab;
-    --line: #2c3739;
-    --accent: #6bb4bb;
-    --accent-fg: #0b1415;
-    --red-bg: #5a1f27;
-    --red-fg: #ffb4bd;
-    --green-bg: #1d4a2a;
-    --green-fg: #a9e8b6;
-    --focus: #79a8ff;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #111718;
-  --surface: #1a2224;
-  --fg: #e5ebeb;
-  --muted: #9aa9ab;
-  --line: #2c3739;
-  --accent: #6bb4bb;
-  --accent-fg: #0b1415;
-  --red-bg: #5a1f27;
-  --red-fg: #ffb4bd;
-  --green-bg: #1d4a2a;
-  --green-fg: #a9e8b6;
-  --focus: #79a8ff;
-  color-scheme: dark;
-}
-* { box-sizing: border-box; }
-body {
-  background: var(--bg);
-  color: var(--fg);
-  font-family: var(--ui);
-  font-size: 15px;
-  line-height: 1.5;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: 28px 48px;
-}
-.wrap { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
-.eyebrow { margin: 0; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
-h1 { margin: 2px 0 6px; font-size: 28px; line-height: 1.15; font-weight: 600; text-wrap: balance; }
-.lede { margin: 0; color: var(--muted); max-width: 62ch; }
-section { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-h2 { margin: 0; font-size: 16px; font-weight: 600; display: flex; align-items: baseline; gap: 8px; }
-h2 .n { font-size: 12px; color: var(--muted); font-weight: 500; letter-spacing: .06em; }
-.drop {
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-  border: 1.5px dashed var(--line); border-radius: 8px; padding: 22px 14px; text-align: center; cursor: pointer;
-}
-.drop.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
-.drop strong { font-weight: 600; }
-.drop span { color: var(--muted); font-size: 13px; }
-.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
-.drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
-.status { margin: 0; font-size: 13px; color: var(--muted); }
-.status.err { color: var(--red-fg); background: var(--red-bg); padding: 8px 10px; border-radius: 6px; }
-.status b { color: var(--fg); font-weight: 600; }
-.rules { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: 10px 12px; align-items: center; }
-.rules .hd { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
-.chip { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
-.chip.r { background: var(--red-bg); outline: 1px solid var(--red-fg); }
-.chip.g { background: var(--green-bg); outline: 1px solid var(--green-fg); }
-.rules label.m { font-weight: 500; }
-input[type="number"], input[type="text"], select {
-  width: 100%; min-width: 0; font: inherit; color: var(--fg); background: var(--bg);
-  border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px;
-}
-input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.opts { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; }
-.check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
-.check input { width: 16px; height: 16px; accent-color: var(--accent); }
-.hint { margin: 0; font-size: 13px; color: var(--muted); }
-button {
-  font: inherit; font-weight: 500; border-radius: 6px; padding: 9px 16px; cursor: pointer;
-  border: 1px solid var(--line); background: var(--surface); color: var(--fg);
-}
-button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
-button:disabled { opacity: .55; cursor: default; }
-.row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; }
-.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.field > span { font-size: 12px; color: var(--muted); font-weight: 500; }
-.stage { overflow-x: auto; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
-.stage canvas { display: block; max-width: none; }
-.actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-.out { margin: 0; font-size: 13px; color: var(--muted); min-height: 1.5em; }
-.fallback { display: none; }
-.fallback img { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; }
-@media (max-width: 520px) {
-  .rules { grid-template-columns: 1fr 1fr; }
-  .rules .hd.first, .rules .hd.spacer { display: none; }
-  .rules label.m { grid-column: 1 / -1; margin-top: 6px; }
-  .row { grid-template-columns: 1fr; }
-  h1 { font-size: 24px; }
-}
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
-</style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f3f5f4; }
+    .navbar {
+      background: #1c2528;
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px;
+      overflow-x: auto;
+      border-bottom: 2px solid #2f6f75;
+    }
+    .tab-btn {
+      background: #2c3739;
+      color: #9aa9ab;
+      border: none;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { background: #3a484b; color: #fff; }
+    .tab-btn.active { background: #2f6f75; color: #ffffff; }
+    .tab-content { display: none; width: 100%; height: calc(100vh - 55px); }
+    .tab-content.active { display: block; }
+    iframe { width: 100%; height: 100%; border: none; }
+    .coming-soon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #59666a;
+      font-size: 18px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
 
-<main class="wrap">
-  <header>
-    <p class="eyebrow">PJP KPI &middot; Pepsi portal file</p>
-    <h1>KPI Report Maker</h1>
-    <p class="lede">Upload the daily Excel file. The report below updates by itself. Press Generate image to save it as a PNG.</p>
-  </header>
+  <div class="navbar">
+    <button class="tab-btn active" onclick="openTab(event, 'tab-kpi')">PJP KPI Report</button>
+    <button class="tab-btn" onclick="openTab(event, 'tab-project2')">Project 2 (Coming Soon)</button>
+  </div>
 
-  <section aria-labelledby="h-up">
-    <h2 id="h-up"><span class="n">1</span> Upload Excel file</h2>
-    <label class="drop" id="drop" for="file">
-      <strong>Tap to choose the file, or drop it here</strong>
-      <span>.xlsx downloaded from the portal (PJP_KPI_...xlsx)</span>
-      <input id="file" type="file" accept=".xlsx,.xls,.csv">
-    </label>
-    <p class="status" id="status" aria-live="polite"></p>
-  </section>
+  <div id="tab-kpi" class="tab-content active">
+    <iframe src="kpi-tool.html"></iframe>
+  </div>
 
-  <section aria-labelledby="h-rules">
-    <h2 id="h-rules"><span class="n">2</span> Highlight rules</h2>
-    <p class="hint">Leave a box empty to switch that rule off. Percent boxes use plain numbers, for example 75 means 75%.</p>
-    <div class="rules" id="rules"></div>
-    <div class="opts">
-      <label class="check" for="r-total"><input type="checkbox" id="r-total"> Also highlight the Total row</label>
-      <button type="button" id="reset">Reset to default rules</button>
+  <div id="tab-project2" class="tab-content">
+    <div class="coming-soon">
+      <p>🚀 Project 2 is Coming Soon. Stay tuned!</p>
     </div>
-  </section>
+  </div>
 
-  <section aria-labelledby="h-prev">
-    <h2 id="h-prev"><span class="n">3</span> Report image</h2>
-    <div class="row">
-      <label class="field" for="title"><span>Heading in the image</span><input type="text" id="title" autocomplete="off"></label>
-      <label class="field" for="size"><span>Image size</span>
-        <select id="size"><option value="1">Same size as screenshot</option><option value="2">2&times; sharper</option></select>
-      </label>
-    </div>
-    <div class="stage"><canvas id="cv" role="img" aria-label="KPI report preview"></canvas></div>
-    <div class="actions">
-      <button type="button" class="primary" id="gen">Generate image</button>
-      <button type="button" id="copy">Copy image</button>
-    </div>
-    <p class="out" id="out" aria-live="polite"></p>
-    <div class="fallback" id="fb"><p class="hint">Saving is not available in this view. Press and hold the image to save or share it.</p><img id="fbimg" alt="Generated KPI report"></div>
-  </section>
-</main>
-
-<script>
-(function () {
-  var $ = function (id) { return document.getElementById(id); };
-  var METRICS = [
-    { key: 'call', label: 'Call completion %', pct: true, dec: 2 },
-    { key: 'strike', label: 'Strike rate', pct: true, dec: 2 },
-    { key: 'skuO', label: 'Avg. SKU / order', pct: false, dec: 1 },
-    { key: 'skuI', label: 'Avg. SKU / invoice', pct: false, dec: 1 }
-  ];
-  var DEFAULTS = {
-    call: { lt: '', gte: '' },
-    strike: { lt: '75', gte: '80' },
-    skuO: { lt: '5', gte: '6.5' },
-    skuI: { lt: '5', gte: '6.5' },
-    total: false
-  };
-  var STORE = 'kpi-report-rules-v1';
-
-  /* Example rows (from the 25/10/2026 file) so the page opens with a working report. */
-  var SAMPLE = {
-    sample: true,
-    title: 'Hassan Traders KPI Report',
-    period: '25/10/2026',
-    iso: '2026-10-25',
-    rows: [
-      { psr: '10085 - Hassan Raza Hafee', v: [100, 76, 4.0, 5.3] },
-      { psr: '2512 - Azeem Altaf', v: [100, 74.19354838709677, 5.8, 5.7] },
-      { psr: '1686 - Faisal Nadeem', v: [100, 80, 6.9, 6.6] },
-      { psr: '1679 - Rana Zaheer Sajid', v: [100, 87.17948717948718, 6.6, 5.3] }
-    ],
-    total: [100, 80, 6.0, 5.7]
-  };
-
-  var data = SAMPLE;
-  var rules = loadRules();
-
-  function clone(o) { return JSON.parse(JSON.stringify(o)); }
-  function loadRules() {
-    try {
-      var s = localStorage.getItem(STORE);
-      if (s) { var o = JSON.parse(s); if (o && o.strike) return o; }
-    } catch (e) {}
-    return clone(DEFAULTS);
-  }
-  function saveRules() { try { localStorage.setItem(STORE, JSON.stringify(rules)); } catch (e) {} }
-
-  /* ---------- rules UI ---------- */
-  function buildRules() {
-    var h = '<div class="hd first">Column</div>' +
-      '<div class="hd"><span class="chip r"></span>Red if less than</div>' +
-      '<div class="hd"><span class="chip g"></span>Green if &ge;</div>';
-    METRICS.forEach(function (m) {
-      h += '<label class="m" for="r-' + m.key + '-lt">' + m.label + '</label>' +
-        '<input type="number" step="any" inputmode="decimal" id="r-' + m.key + '-lt" aria-label="' + m.label + ' red if less than">' +
-        '<input type="number" step="any" inputmode="decimal" id="r-' + m.key + '-gte" aria-label="' + m.label + ' green if greater or equal">';
-    });
-    $('rules').innerHTML = h;
-    METRICS.forEach(function (m) {
-      ['lt', 'gte'].forEach(function (k) {
-        $('r-' + m.key + '-' + k).addEventListener('input', readRules);
-      });
-    });
-    $('r-total').addEventListener('change', readRules);
-    fillRules();
-  }
-  function fillRules() {
-    METRICS.forEach(function (m) {
-      $('r-' + m.key + '-lt').value = rules[m.key].lt;
-      $('r-' + m.key + '-gte').value = rules[m.key].gte;
-    });
-    $('r-total').checked = !!rules.total;
-  }
-  function readRules() {
-    METRICS.forEach(function (m) {
-      rules[m.key] = { lt: $('r-' + m.key + '-lt').value, gte: $('r-' + m.key + '-gte').value };
-    });
-    rules.total = $('r-total').checked;
-    saveRules();
-    draw();
-  }
-  $('reset').addEventListener('click', function () { rules = clone(DEFAULTS); saveRules(); fillRules(); draw(); });
-
-  /* ---------- Excel parsing ---------- */
-  function norm(s) { return String(s == null ? '' : s).replace(/\s+/g, ' ').trim().toUpperCase(); }
-  function titleCase(s) { return s.toLowerCase().replace(/\b[a-z]/g, function (c) { return c.toUpperCase(); }); }
-
-  function parseSheet(aoa) {
-    var h = -1, i, j;
-    for (i = 0; i < aoa.length; i++) {
-      var cells = (aoa[i] || []).map(norm);
-      if (cells.indexOf('PSR') >= 0 && cells.indexOf('CALL COMPLETION %') >= 0) { h = i; break; }
+  <script>
+    function openTab(evt, tabName) {
+      var contents = document.getElementsByClassName("tab-content");
+      for (var i = 0; i < contents.length; i++) { contents[i].classList.remove("active"); }
+      var buttons = document.getElementsByClassName("tab-btn");
+      for (var i = 0; i < buttons.length; i++) { buttons[i].classList.remove("active"); }
+      document.getElementById(tabName).classList.add("active");
+      evt.currentTarget.classList.add("active");
     }
-    if (h < 0) throw new Error('Could not find the PSR / CALL COMPLETION % header row. Is this the PJP KPI file?');
-    var head = aoa[h].map(norm);
-    var want = { psr: 'PSR', call: 'CALL COMPLETION %', strike: 'STRIKE RATE', skuO: 'AVG. SKU / ORDER', skuI: 'AVG. SKU / INVOICE' };
-    var col = {};
-    Object.keys(want).forEach(function (k) {
-      var ix = head.indexOf(want[k]);
-      if (ix < 0) throw new Error('Column "' + want[k] + '" is missing in this file.');
-      col[k] = ix;
-    });
-    function num(v, pct) {
-      if (v == null || v === '') return NaN;
-      var n;
-      if (typeof v === 'number') { n = v; return pct ? n * 100 : n; }
-      var t = String(v).trim(); var hasPct = t.indexOf('%') >= 0;
-      n = parseFloat(t.replace('%', '').replace(/,/g, ''));
-      if (isNaN(n)) return NaN;
-      return pct && !hasPct ? n * 100 : n;
-    }
-    function vals(r) {
-      return [num(r[col.call], true), num(r[col.strike], true), num(r[col.skuO], false), num(r[col.skuI], false)];
-    }
-    var rows = [], total = null;
-    for (i = h + 1; i < aoa.length; i++) {
-      var r = aoa[i] || [];
-      var p = r[col.psr] == null ? '' : String(r[col.psr]).trim();
-      if (/^generated on/i.test(String(r[0] == null ? '' : r[0]).trim())) break;
-      if (!p) continue;
-      if (/^total$/i.test(p)) { total = vals(r); break; }
-      rows.push({ psr: p, v: vals(r) });
-    }
-    if (!rows.length) throw new Error('No PSR rows were found under the header.');
-    var name = '', period = '', iso = '';
-    for (i = 0; i < h; i++) {
-      var first = aoa[i] || [];
-      for (j = 0; j < first.length; j++) {
-        var c = first[j] == null ? '' : String(first[j]).trim();
-        var m = c.match(/^\d+\s*-\s*([^|]+?)\s*(\||$)/);
-        if (m && !name) name = titleCase(m[1]);
-        var pm = c.match(/^Period:\s*(\d{2})\/(\d{2})\/(\d{4})(?:\s*-\s*(\d{2}\/\d{2}\/\d{4}))?/i);
-        if (pm && !period) { period = pm[1] + '/' + pm[2] + '/' + pm[3]; iso = pm[3] + '-' + pm[2] + '-' + pm[1]; }
-      }
-    }
-    return {
-      sample: false,
-      title: (name || 'Distributor') + ' KPI Report',
-      period: period, iso: iso, rows: rows, total: total
-    };
-  }
-
-  function handleFile(file) {
-    if (!file) return;
-    var st = $('status');
-    st.className = 'status';
-    if (typeof XLSX === 'undefined') { st.className = 'status err'; st.textContent = 'The Excel reader did not load. Check the internet connection and reload the page.'; return; }
-    st.textContent = 'Reading ' + file.name + '...';
-    file.arrayBuffer().then(function (buf) {
-      var wb = XLSX.read(buf, { type: 'array' });
-      var ws = wb.Sheets[wb.SheetNames[0]];
-      var aoa = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null });
-      data = parseSheet(aoa);
-      $('title').value = data.title;
-      st.className = 'status';
-      st.innerHTML = '<b>' + escapeHtml(file.name) + '</b> loaded. ' + data.rows.length + ' PSRs' + (data.period ? ', period ' + escapeHtml(data.period) : '') + '.';
-      draw();
-    }).catch(function (e) {
-      st.className = 'status err';
-      st.textContent = (e && e.message) ? e.message : 'This file could not be read.';
-    });
-  }
-  function escapeHtml(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-
-  $('file').addEventListener('change', function (e) { handleFile(e.target.files[0]); e.target.value = ''; });
-  var drop = $('drop');
-  ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); }); });
-  ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); }); });
-  drop.addEventListener('drop', function (e) { if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
-
-  /* ---------- drawing (matches the screenshot: 701 px wide, 20 px rows) ---------- */
-  var F = { reg: '14px Carlito, Calibri, Arial, sans-serif', bold: '700 14px Carlito, Calibri, Arial, sans-serif', head: '13px Carlito, Calibri, Arial, sans-serif', big: '15px Carlito, Calibri, Arial, sans-serif' };
-  var OX = 29, OY = 17, RH = 20, RIGHT = 31, BOTTOM = 25;
-  var COLORS = { title: '#FFE699', titleText: '#2E75B6', order: '#5F9599', deliv: '#805F99', head: '#E3E3E3', red: '#FFC7CE', redText: '#9C0006', green: '#C6EFCE', greenText: '#006100' };
-
-  function classify(m, v, isTotal) {
-    if (isNaN(v)) return null;
-    if (isTotal && !rules.total) return null;
-    var r = rules[m.key];
-    var p = Math.pow(10, m.dec);
-    var rv = Math.round(v * p) / p;
-    if (r.lt !== '' && r.lt != null && rv < parseFloat(r.lt)) return 'red';
-    if (r.gte !== '' && r.gte != null && rv >= parseFloat(r.gte)) return 'green';
-    return null;
-  }
-  function fmt(m, v) { return isNaN(v) ? '-' : (m.pct ? v.toFixed(2) + '%' : v.toFixed(1)); }
-
-  function layout() {
-    var mc = document.createElement('canvas').getContext('2d');
-    mc.font = F.reg;
-    var w0 = 171;
-    data.rows.forEach(function (r) { w0 = Math.max(w0, Math.ceil(mc.measureText(r.psr).width) + 16); });
-    mc.font = F.bold;
-    var t = $('title').value || data.title;
-    var cw = [w0, 137, 82, 121, 130];
-    var tw = Math.ceil(mc.measureText(t).width) + 16;
-    if (tw > cw[0] + cw[1]) cw[1] = tw - cw[0];
-    var xs = [OX]; cw.forEach(function (w) { xs.push(xs[xs.length - 1] + w); });
-    var nrows = 2 + data.rows.length + (data.total ? 1 : 0);
-    return { cw: cw, xs: xs, nrows: nrows, W: xs[5] + RIGHT, H: OY + nrows * RH + BOTTOM, title: t };
-  }
-
-  function render(cv, scale) {
-    var L = layout();
-    cv.width = Math.round(L.W * scale);
-    cv.height = Math.round(L.H * scale);
-    var c = cv.getContext('2d');
-    c.setTransform(scale, 0, 0, scale, 0, 0);
-    c.fillStyle = '#fff'; c.fillRect(0, 0, L.W, L.H);
-    var xs = L.xs, y0 = OY;
-    function rect(x1, x2, row, color) { c.fillStyle = color; c.fillRect(x1, y0 + row * RH, x2 - x1, RH); }
-    function text(s, x1, x2, row, color, font, align) {
-      c.fillStyle = color; c.font = font; c.textBaseline = 'middle';
-      c.textAlign = align || 'center';
-      var x = align === 'left' ? x1 + 6 : (x1 + x2) / 2;
-      c.fillText(s, x, y0 + row * RH + RH / 2 + 1);
-    }
-    /* group header */
-    rect(xs[0], xs[2], 0, COLORS.title); text(L.title, xs[0], xs[2], 0, COLORS.titleText, F.bold);
-    rect(xs[2], xs[4], 0, COLORS.order); text('Order KPI', xs[2], xs[4], 0, '#fff', F.big);
-    rect(xs[4], xs[5], 0, COLORS.deliv); text('Delivery KPI', xs[4], xs[5], 0, '#fff', F.big);
-    /* column header */
-    rect(xs[0], xs[5], 1, COLORS.head);
-    ['PSR', 'CALL COMPLETION %', 'STRIKE RATE', 'AVG. SKU / ORDER', 'AVG. SKU / INVOICE'].forEach(function (t, i) {
-      text(t, xs[i], xs[i + 1], 1, '#222', F.head);
-    });
-    /* body */
-    var all = data.rows.map(function (r) { return { psr: r.psr, v: r.v, total: false }; });
-    if (data.total) all.push({ psr: 'Total', v: data.total, total: true });
-    all.forEach(function (r, k) {
-      var row = 2 + k;
-      var font = r.total ? F.bold : F.reg;
-      text(r.psr, xs[0], xs[1], row, '#000', font, r.total ? 'center' : 'left');
-      METRICS.forEach(function (m, i) {
-        var cls = classify(m, r.v[i], r.total);
-        var bg = null, fg = '#000';
-        if (cls === 'red') { bg = COLORS.red; fg = COLORS.redText; }
-        if (cls === 'green') { bg = COLORS.green; fg = COLORS.greenText; }
-        if (bg) rect(xs[i + 1], xs[i + 2], row, bg);
-        text(fmt(m, r.v[i]), xs[i + 1], xs[i + 2], row, fg, font);
-      });
-    });
-    /* grid lines */
-    var bottom = y0 + L.nrows * RH;
-    c.strokeStyle = '#000';
-    function line(x1, y1, x2, y2, w) {
-      c.lineWidth = w; c.beginPath();
-      var o = w === 1 ? 0.5 : 0;
-      if (x1 === x2) { c.moveTo(x1 + o, y1); c.lineTo(x2 + o, y2); } else { c.moveTo(x1, y1 + o); c.lineTo(x2, y2 + o); }
-      c.stroke();
-    }
-    for (var i = 0; i <= L.nrows; i++) {
-      var edge = (i === 0 || i === L.nrows);
-      line(xs[0], y0 + i * RH, xs[5], y0 + i * RH, edge ? 2 : 1);
-    }
-    for (var j = 0; j <= 5; j++) {
-      var outer = (j === 0 || j === 5);
-      var topY = (j === 1 || j === 3) ? y0 + RH : y0;
-      line(xs[j], topY, xs[j], bottom, outer ? 2 : 1);
-    }
-    return L;
-  }
-
-  var cv = $('cv');
-  function draw() {
-    var L = render(cv, 2);
-    cv.style.width = L.W + 'px';
-    cv.style.height = L.H + 'px';
-  }
-  $('title').addEventListener('input', draw);
-
-  /* ---------- output ---------- */
-  function blobOf(scale) {
-    var off = document.createElement('canvas');
-    render(off, scale);
-    return new Promise(function (res, rej) {
-      off.toBlob(function (b) { b ? res(b) : rej(new Error('Image could not be created.')); }, 'image/png');
-    });
-  }
-  function fileName() {
-    var base = (data.title || 'KPI Report').replace(/KPI Report$/i, '').trim().replace(/[^\w]+/g, '-').replace(/^-|-$/g, '') || 'Report';
-    return base + '-KPI-' + (data.iso || new Date().toISOString().slice(0, 10)) + '.png';
-  }
-  function say(t) { $('out').textContent = t; }
-
-  $('gen').addEventListener('click', function () {
-    var scale = parseInt($('size').value, 10) || 1;
-    var btn = $('gen'); btn.disabled = true; say('Generating...');
-    $('fb').style.display = 'none';
-    blobOf(scale).then(function (blob) {
-      var tmp = new Image();
-      var url = URL.createObjectURL(blob);
-      tmp.onload = function () {
-        var dims = tmp.naturalWidth + ' × ' + tmp.naturalHeight + ' px';
-        var show = function () { $('fbimg').src = url; $('fb').style.display = 'block'; };
-        claude.use('downloads').then(function (d) {
-          if (!d) { say('Image ready (' + dims + ').'); show(); btn.disabled = false; return; }
-          d.save({ filename: fileName(), data: blob }).then(function () {
-            say('Saved ' + fileName() + ' (' + dims + ').'); btn.disabled = false;
-          }).catch(function (e) {
-            var code = e && e.code;
-            if (code === 'declined') say('Save cancelled. Press Generate image to try again.');
-            else { say('Image ready (' + dims + ').'); show(); }
-            btn.disabled = false;
-          });
-        }).catch(function () { say('Image ready (' + dims + ').'); show(); btn.disabled = false; });
-      };
-      tmp.src = url;
-    }).catch(function (e) { say(e.message || 'Image could not be created.'); btn.disabled = false; });
-  });
-
-  $('copy').addEventListener('click', function () {
-    var scale = parseInt($('size').value, 10) || 1;
-    if (!(navigator.clipboard && window.ClipboardItem)) { say('Copy is not available here. Use Generate image instead.'); return; }
-    blobOf(scale).then(function (blob) {
-      return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-    }).then(function () { say('Image copied. Paste it into WhatsApp or any chat.'); })
-      .catch(function () { say('Copy was blocked here. Use Generate image instead.'); });
-  });
-
-  /* ---------- start ---------- */
-  buildRules();
-  $('title').value = data.title;
-  $('status').innerHTML = 'Showing <b>sample data</b> from 25/10/2026. Upload today’s file to replace it.';
-  draw();
-  if (document.fonts && document.fonts.load) {
-    Promise.all([document.fonts.load('14px Carlito'), document.fonts.load('700 14px Carlito')]).then(draw).catch(function () {});
-  }
-})();
-</script>
-
-</body></html>
+  </script>
+</body>
+</html>
