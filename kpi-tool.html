@@ -187,19 +187,20 @@ button:disabled { opacity: .55; cursor: default; }
   resizeCanvas();
 
   // Continental & regional grid coordinates shaping a stylized digital world map
+  // Continental & regional grid coordinates shaping a stylized digital world map (Spread expanded)
   const mapOutlines = [
-    // North America nodes
-    {x: 0.15, y: 0.25}, {x: 0.18, y: 0.35}, {x: 0.22, y: 0.28}, {x: 0.25, y: 0.42}, {x: 0.20, y: 0.50},
+    // North America nodes (wider spread)
+    {x: 0.08, y: 0.20}, {x: 0.14, y: 0.32}, {x: 0.20, y: 0.24}, {x: 0.26, y: 0.45}, {x: 0.18, y: 0.58},
     // South America nodes
-    {x: 0.28, y: 0.60}, {x: 0.32, y: 0.72}, {x: 0.26, y: 0.80},
+    {x: 0.30, y: 0.65}, {x: 0.36, y: 0.82}, {x: 0.25, y: 0.90},
     // Europe nodes
-    {x: 0.48, y: 0.25}, {x: 0.52, y: 0.22}, {x: 0.55, y: 0.32}, {x: 0.46, y: 0.38},
+    {x: 0.45, y: 0.20}, {x: 0.52, y: 0.16}, {x: 0.58, y: 0.30}, {x: 0.42, y: 0.36},
     // Africa nodes
-    {x: 0.49, y: 0.48}, {x: 0.53, y: 0.62}, {x: 0.48, y: 0.75},
+    {x: 0.46, y: 0.48}, {x: 0.54, y: 0.68}, {x: 0.45, y: 0.84},
     // Asia & Middle East nodes
-    {x: 0.62, y: 0.25}, {x: 0.68, y: 0.30}, {x: 0.75, y: 0.28}, {x: 0.80, y: 0.38}, {x: 0.72, y: 0.48}, {x: 0.65, y: 0.42},
+    {x: 0.60, y: 0.20}, {x: 0.70, y: 0.26}, {x: 0.82, y: 0.22}, {x: 0.90, y: 0.36}, {x: 0.75, y: 0.50}, {x: 0.64, y: 0.44},
     // Australia / Oceania nodes
-    {x: 0.84, y: 0.70}, {x: 0.89, y: 0.78}
+    {x: 0.88, y: 0.75}, {x: 0.96, y: 0.88}
   ];
 
   let nodes = [];
@@ -211,11 +212,11 @@ button:disabled { opacity: .55; cursor: default; }
         y: pt.y * canvas.height,
         baseX: pt.x * canvas.width,
         baseY: pt.y * canvas.height,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4,
+        vx: (Math.random() - 0.5) * 0.6,
+        vy: (Math.random() - 0.5) * 0.6,
         pulse: Math.random() * Math.PI,
         pulseSpeed: 0.04 + Math.random() * 0.04,
-        radius: 2 + Math.random() * 2
+        radius: 2.5 + Math.random() * 2.5
       });
     });
   }
