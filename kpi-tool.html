@@ -4,8 +4,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Carlito:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-/* Red Spider Web Canvas Layer */
-#spider-canvas {
+/* Digital World Map & Glowing Network Canvas Layer */
+#map-canvas {
   position: fixed;
   top: 0;
   left: 0;
@@ -15,7 +15,7 @@
   pointer-events: none;
 }
 
-/* Dark Theme & Glass Cards so Red Spider shows nicely behind */
+/* Dark Theme & Glass Cards */
 :root {
   --bg: #0f172a;
   --surface: rgba(30, 41, 59, 0.88);
@@ -124,8 +124,8 @@ button:disabled { opacity: .55; cursor: default; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
-<!-- Red Spider Animation Canvas -->
-<canvas id="spider-canvas"></canvas>
+<!-- Digital World Map & Glowing Network Canvas -->
+<canvas id="map-canvas"></canvas>
 
 <main class="wrap">
   <header>
@@ -173,9 +173,9 @@ button:disabled { opacity: .55; cursor: default; }
 </main>
 
 <script>
-// Red Spider / Network Background Animation
+// Stylized Digital World Map & Glowing Light Points Network Animation
 (function() {
-  const canvas = document.getElementById('spider-canvas');
+  const canvas = document.getElementById('map-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
@@ -186,63 +186,97 @@ button:disabled { opacity: .55; cursor: default; }
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
 
-  let particles = [];
-  const numberOfParticles = 35;
+  // Continental & regional grid coordinates shaping a stylized digital world map
+  const mapOutlines = [
+    // North America nodes
+    {x: 0.15, y: 0.25}, {x: 0.18, y: 0.35}, {x: 0.22, y: 0.28}, {x: 0.25, y: 0.42}, {x: 0.20, y: 0.50},
+    // South America nodes
+    {x: 0.28, y: 0.60}, {x: 0.32, y: 0.72}, {x: 0.26, y: 0.80},
+    // Europe nodes
+    {x: 0.48, y: 0.25}, {x: 0.52, y: 0.22}, {x: 0.55, y: 0.32}, {x: 0.46, y: 0.38},
+    // Africa nodes
+    {x: 0.49, y: 0.48}, {x: 0.53, y: 0.62}, {x: 0.48, y: 0.75},
+    // Asia & Middle East nodes
+    {x: 0.62, y: 0.25}, {x: 0.68, y: 0.30}, {x: 0.75, y: 0.28}, {x: 0.80, y: 0.38}, {x: 0.72, y: 0.48}, {x: 0.65, y: 0.42},
+    // Australia / Oceania nodes
+    {x: 0.84, y: 0.70}, {x: 0.89, y: 0.78}
+  ];
 
-  class SpiderNode {
-    constructor() {
-      this.x = Math.random() * canvas.width;
-      this.y = Math.random() * canvas.height;
-      this.vx = (Math.random() - 0.5) * 1.2;
-      this.vy = (Math.random() - 0.5) * 1.2;
-      this.radius = 2;
-    }
-    update() {
-      this.x += this.vx;
-      this.y += this.vy;
-      if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-      if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
-    }
-    draw() {
-      ctx.fillStyle = '#ff3333';
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-      ctx.fill();
-    }
+  let nodes = [];
+  function initMap() {
+    nodes = [];
+    mapOutlines.forEach((pt) => {
+      nodes.push({
+        x: pt.x * canvas.width,
+        y: pt.y * canvas.height,
+        baseX: pt.x * canvas.width,
+        baseY: pt.y * canvas.height,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
+        pulse: Math.random() * Math.PI,
+        pulseSpeed: 0.04 + Math.random() * 0.04,
+        radius: 2 + Math.random() * 2
+      });
+    });
   }
+  initMap();
+  window.addEventListener('resize', initMap);
 
-  for (let i = 0; i < numberOfParticles; i++) {
-    particles.push(new SpiderNode());
-  }
-
-  function animateSpider() {
+  function animateMap() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    for (let i = 0; i < particles.length; i++) {
-      particles[i].update();
-      particles[i].draw();
 
-      for (let j = i + 1; j < particles.length; j++) {
-        let dx = particles[i].x - particles[j].x;
-        let dy = particles[i].y - particles[j].y;
-        let distance = Math.sqrt(dx * dx + dy * dy);
+    for (let i = 0; i < nodes.length; i++) {
+      let n = nodes[i];
+      n.x += n.vx;
+      n.y += n.vy;
 
-        if (distance < 130) {
-          ctx.strokeStyle = `rgba(255, 51, 51, ${1 - distance / 130})`;
-          ctx.lineWidth = 0.6;
+      // Keep nodes hovering near their geographic positions
+      if (Math.abs(n.x - n.baseX) > 35) n.vx *= -1;
+      if (Math.abs(n.y - n.baseY) > 35) n.vy *= -1;
+
+      n.pulse += n.pulseSpeed;
+      let currentRadius = n.radius + Math.sin(n.pulse) * 1.5;
+
+      // Connect regional nodes with glowing light lines (digital map network)
+      for (let j = i + 1; j < nodes.length; j++) {
+        let n2 = nodes[j];
+        let dx = n.x - n2.x;
+        let dy = n.y - n2.y;
+        let dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < 140) {
+          ctx.strokeStyle = `rgba(56, 189, 248, ${(1 - dist / 140) * 0.3})`;
+          ctx.lineWidth = 0.8;
           ctx.beginPath();
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.moveTo(n.x, n.y);
+          ctx.lineTo(n2.x, n2.y);
           ctx.stroke();
         }
       }
+
+      // Draw glowing geographical light point
+      ctx.shadowColor = '#38bdf8';
+      ctx.shadowBlur = 12;
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.9)';
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, Math.max(1, currentRadius), 0, Math.PI * 2);
+      ctx.fill();
+
+      // Outer radar scanning ring
+      ctx.strokeStyle = `rgba(2, 132, 199, ${Math.abs(Math.cos(n.pulse)) * 0.5})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, Math.max(2, currentRadius * 2.2), 0, Math.PI * 2);
+      ctx.stroke();
     }
-    requestAnimationFrame(animateSpider);
+    ctx.shadowBlur = 0;
+
+    requestAnimationFrame(animateMap);
   }
-  animateSpider();
+  animateMap();
 })();
 
-// Main KPI Report Logic (Safe for GitHub Pages)
+// Main KPI Report Logic
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var METRICS = [
