@@ -266,11 +266,11 @@
         <button class="tab-btn active" onclick="openTab(event, 'tab-kpi')">
           <i class="fa-solid fa-file-invoice"></i> 320 - PJP KPI
         </button>
+        <button class="tab-btn" onclick="openTab(event, 'tab-project3')">
+          <i class="fa-solid fa-cubes"></i> PSR - Incentive
+        </button>
         <button class="tab-btn" onclick="openTab(event, 'tab-project2')">
           <i class="fa-solid fa-layer-group"></i> R333 - Booking <span class="tab-badge">Soon</span>
-        </button>
-       <button class="tab-btn" onclick="openTab(event, 'tab-project3')">
-          <i class="fa-solid fa-cubes"></i> PSR - Incentive
         </button>
       </nav>
     </header>
@@ -279,18 +279,18 @@
       <iframe src="kpi-tool.html"></iframe>
     </div>
 
+    <!-- Tab 2: PSR - Incentive Report (Ab 2nd number par) -->
+    <div id="tab-project3" class="tab-content">
+      <iframe src="psr-incentive.html"></iframe>
+    </div>
+
+    <!-- Tab 3: R333 - Booking (Now on 3rd number) -->
     <div id="tab-project2" class="tab-content">
       <div class="coming-soon">
         <h2>Project 2 Under Development</h2>
         <p>This space is reserved for your next reporting tool by M.Usman.</p>
       </div>
     </div>
-
-    <!-- Tab 3: PSR - Incentive Report -->
-    <div id="tab-project3" class="tab-content">
-      <iframe src="psr-incentive.html"></iframe>
-    </div>
-  </div>
 
   <script>
     if (sessionStorage.getItem("isLoggedIn") === "true") {
