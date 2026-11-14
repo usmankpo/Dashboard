@@ -17,6 +17,17 @@
       overflow-x: hidden;
     }
 
+    /* Red Spider Web Canvas Layer */
+    #spider-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+
     /* Top Header */
     .portal-header {
       background: #1e293b;
@@ -46,7 +57,7 @@
       height: 100px;
       border-radius: 50%;
       object-fit: cover;
-      border: 3px solid #0284c7;
+      border: 3px solid #0f172a;
       box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
       margin-bottom: 20px;
       background: #1e293b;
@@ -216,6 +227,9 @@
 </head>
 <body>
 
+  <!-- Red Spider Animation Canvas Background -->
+  <canvas id="spider-canvas"></canvas>
+
   <!-- Login View -->
   <div id="login-view" style="display: flex; flex-direction: column; flex: 1;">
     <div class="portal-header">
@@ -279,20 +293,88 @@
       <iframe src="kpi-tool.html"></iframe>
     </div>
 
-    <!-- Tab 2: PSR - Incentive Report (Ab 2nd number par) -->
+    <!-- Tab 2: PSR - Incentive Report -->
     <div id="tab-project3" class="tab-content">
       <iframe src="psr-incentive.html"></iframe>
     </div>
 
-    <!-- Tab 3: R333 - Booking (Now on 3rd number) -->
+    <!-- Tab 3: R333 - Booking -->
     <div id="tab-project2" class="tab-content">
       <div class="coming-soon">
         <h2>Project 2 Under Development</h2>
         <p>This space is reserved for your next reporting tool by M.Usman.</p>
       </div>
     </div>
+  </div>
 
   <script>
+    // Red Spider / Network Background Animation Script
+    const canvas = document.getElementById('spider-canvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    let particles = [];
+    const numberOfParticles = 35;
+
+    class SpiderNode {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 1.2;
+        this.vy = (Math.random() - 0.5) * 1.2;
+        this.radius = 2;
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+      }
+      draw() {
+        ctx.fillStyle = '#ff3333';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    for (let i = 0; i < numberOfParticles; i++) {
+      particles.push(new SpiderNode());
+    }
+
+    function animateSpider() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw();
+
+        for (let j = i + 1; j < particles.length; j++) {
+          let dx = particles[i].x - particles[j].x;
+          let dy = particles[i].y - particles[j].y;
+          let distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 130) {
+            ctx.strokeStyle = `rgba(255, 51, 51, ${1 - distance / 130})`;
+            ctx.lineWidth = 0.6;
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+      requestAnimationFrame(animateSpider);
+    }
+    animateSpider();
+
+    // Login & Session Logic
     if (sessionStorage.getItem("isLoggedIn") === "true") {
       document.getElementById("login-view").style.display = "none";
       document.getElementById("dashboard-view").style.display = "flex";
@@ -302,7 +384,6 @@
       var userid = document.getElementById("userid").value;
       var pass = document.getElementById("passcode").value;
 
-      // Check both ID and Password
       if (userid !== "" && pass === "00123") {
         sessionStorage.setItem("isLoggedIn", "true");
         document.getElementById("login-view").style.display = "none";
