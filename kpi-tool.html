@@ -4,8 +4,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Carlito:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-/* Digital World Map & Glowing Network Canvas Layer */
-#map-canvas {
+/* Red Spider Web Canvas Layer */
+#spider-canvas {
   position: fixed;
   top: 0;
   left: 0;
@@ -15,7 +15,7 @@
   pointer-events: none;
 }
 
-/* Dark Theme & Glass Cards */
+/* Dark Theme & Glass Cards so Red Spider shows nicely behind */
 :root {
   --bg: #0f172a;
   --surface: rgba(30, 41, 59, 0.88);
@@ -124,8 +124,8 @@ button:disabled { opacity: .55; cursor: default; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
-<!-- Digital World Map & Glowing Network Canvas -->
-<canvas id="map-canvas"></canvas>
+<!-- Red Spider Animation Canvas -->
+<canvas id="spider-canvas"></canvas>
 
 <main class="wrap">
   <header>
@@ -173,9 +173,9 @@ button:disabled { opacity: .55; cursor: default; }
 </main>
 
 <script>
-// Stylized Digital World Map & Glowing Light Points Animation
+// Red Spider / Network Background Animation
 (function() {
-  const canvas = document.getElementById('map-canvas');
+  const canvas = document.getElementById('spider-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
@@ -186,94 +186,63 @@ button:disabled { opacity: .55; cursor: default; }
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
 
-  const baseNodes = [
-    {x: 0.18, y: 0.3}, {x: 0.22, y: 0.25}, {x: 0.25, y: 0.4}, {x: 0.28, y: 0.55},
-    {x: 0.48, y: 0.28}, {x: 0.52, y: 0.22}, {x: 0.55, y: 0.35}, {x: 0.50, y: 0.48},
-    {x: 0.68, y: 0.26}, {x: 0.75, y: 0.32}, {x: 0.82, y: 0.28}, {x: 0.78, y: 0.45},
-    {x: 0.85, y: 0.65}, {x: 0.90, y: 0.72}
-  ];
+  let particles = [];
+  const numberOfParticles = 35;
 
-  let points = [];
-  function initMapPoints() {
-    points = [];
-    baseNodes.forEach((node) => {
-      points.push({
-        x: node.x * canvas.width,
-        y: node.y * canvas.height,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: (Math.random() - 0.5) * 0.3,
-        pulse: Math.random() * Math.PI,
-        pulseSpeed: 0.03 + Math.random() * 0.03,
-        size: 2.5 + Math.random() * 2
-      });
-    });
-
-    for(let i=0; i<15; i++) {
-      points.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4,
-        pulse: Math.random() * Math.PI,
-        pulseSpeed: 0.02 + Math.random() * 0.04,
-        size: 1.5 + Math.random() * 1.5
-      });
+  class SpiderNode {
+    constructor() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.vx = (Math.random() - 0.5) * 1.2;
+      this.vy = (Math.random() - 0.5) * 1.2;
+      this.radius = 2;
+    }
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+      if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+      if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+    }
+    draw() {
+      ctx.fillStyle = '#ff3333';
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
-  initMapPoints();
-  window.addEventListener('resize', initMapPoints);
 
-  function animateMap() {
+  for (let i = 0; i < numberOfParticles; i++) {
+    particles.push(new SpiderNode());
+  }
+
+  function animateSpider() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    for (let i = 0; i < particles.length; i++) {
+      particles[i].update();
+      particles[i].draw();
 
-    for (let i = 0; i < points.length; i++) {
-      let p = points[i];
-      p.x += p.vx;
-      p.y += p.vy;
+      for (let j = i + 1; j < particles.length; j++) {
+        let dx = particles[i].x - particles[j].x;
+        let dy = particles[i].y - particles[j].y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
 
-      if (p.x < 50 || p.x > canvas.width - 50) p.vx *= -1;
-      if (p.y < 50 || p.y > canvas.height - 50) p.vy *= -1;
-
-      p.pulse += p.pulseSpeed;
-      let currentSize = p.size + Math.sin(p.pulse) * 1.2;
-
-      for (let j = i + 1; j < points.length; j++) {
-        let p2 = points[j];
-        let dx = p.x - p2.x;
-        let dy = p.y - p2.y;
-        let dist = Math.sqrt(dx * dx + dy * dy);
-
-        if (dist < 160) {
-          ctx.strokeStyle = `rgba(56, 189, 248, ${(1 - dist / 160) * 0.25})`;
-          ctx.lineWidth = 0.7;
+        if (distance < 130) {
+          ctx.strokeStyle = `rgba(255, 51, 51, ${1 - distance / 130})`;
+          ctx.lineWidth = 0.6;
           ctx.beginPath();
-          ctx.moveTo(p.x, p.y);
-          ctx.lineTo(p2.x, p2.y);
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
           ctx.stroke();
         }
       }
-
-      ctx.shadowColor = '#38bdf8';
-      ctx.shadowBlur = 10;
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.85)';
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, Math.max(1, currentSize), 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.strokeStyle = `rgba(2, 132, 199, ${Math.abs(Math.cos(p.pulse)) * 0.6})`;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, Math.max(2, currentSize * 2.5), 0, Math.PI * 2);
-      ctx.stroke();
     }
-    ctx.shadowBlur = 0;
-
-    requestAnimationFrame(animateMap);
+    requestAnimationFrame(animateSpider);
   }
-  animateMap();
+  animateSpider();
 })();
 
-// Main KPI Report Logic
+// Main KPI Report Logic (Safe for GitHub Pages)
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var METRICS = [
@@ -558,26 +527,12 @@ button:disabled { opacity: .55; cursor: default; }
       tmp.onload = function () {
         var dims = tmp.naturalWidth + ' × ' + tmp.naturalHeight + ' px';
         var show = function () { $('fbimg').src = url; $('fb').style.display = 'block'; };
-        if (typeof claude !== 'undefined' && claude.use) {
-          claude.use('downloads').then(function (d) {
-            if (!d) { say('Image ready (' + dims + ').'); show(); btn.disabled = false; return; }
-            d.save({ filename: fileName(), data: blob }).then(function () {
-              say('Saved ' + fileName() + ' (' + dims + ').'); btn.disabled = false;
-            }).catch(function (e) {
-              var code = e && e.code;
-              if (code === 'declined') say('Save cancelled. Press Generate image to try again.');
-              else { say('Image ready (' + dims + ').'); show(); }
-              btn.disabled = false;
-            });
-          }).catch(function () { say('Image ready (' + dims + ').'); show(); btn.disabled = false; });
-        } else {
-          var a = document.createElement('a');
-          a.href = url;
-          a.download = fileName();
-          a.click();
-          say('Saved ' + fileName() + ' (' + dims + ').');
-          btn.disabled = false;
-        }
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = fileName();
+        a.click();
+        say('Saved ' + fileName() + ' (' + dims + ').');
+        btn.disabled = false;
       };
       tmp.src = url;
     }).catch(function (e) { say(e.message || 'Image could not be created.'); btn.disabled = false; });
