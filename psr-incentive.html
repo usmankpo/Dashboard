@@ -1,0 +1,474 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Commission Packs Report</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Carlito:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* Layout: one narrow column. Upload, then highlight rules, then a live preview of the report image with the save button under it. */
+:root {
+  --bg: #f3f5f4;
+  --surface: #ffffff;
+  --fg: #1c2528;
+  --muted: #59666a;
+  --line: #d6dcda;
+  --accent: #2f6f75;
+  --accent-fg: #ffffff;
+  --red-bg: #ffc7ce;
+  --red-fg: #9c0006;
+  --green-bg: #c6efce;
+  --green-fg: #006100;
+  --focus: #1f6feb;
+  --ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111718;
+    --surface: #1a2224;
+    --fg: #e5ebeb;
+    --muted: #9aa9ab;
+    --line: #2c3739;
+    --accent: #6bb4bb;
+    --accent-fg: #0b1415;
+    --red-bg: #5a1f27;
+    --red-fg: #ffb4bd;
+    --green-bg: #1d4a2a;
+    --green-fg: #a9e8b6;
+    --focus: #79a8ff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111718;
+  --surface: #1a2224;
+  --fg: #e5ebeb;
+  --muted: #9aa9ab;
+  --line: #2c3739;
+  --accent: #6bb4bb;
+  --accent-fg: #0b1415;
+  --red-bg: #5a1f27;
+  --red-fg: #ffb4bd;
+  --green-bg: #1d4a2a;
+  --green-fg: #a9e8b6;
+  --focus: #79a8ff;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--ui);
+  font-size: 15px;
+  line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+.eyebrow { margin: 0; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+h1 { margin: 2px 0 6px; font-size: 28px; line-height: 1.15; font-weight: 600; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); max-width: 62ch; }
+section { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+h2 { margin: 0; font-size: 16px; font-weight: 600; display: flex; align-items: baseline; gap: 8px; }
+h2 .n { font-size: 12px; color: var(--muted); font-weight: 500; letter-spacing: .06em; }
+.drop {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  border: 1.5px dashed var(--line); border-radius: 8px; padding: 22px 14px; text-align: center; cursor: pointer;
+}
+.drop.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.drop strong { font-weight: 600; }
+.drop span { color: var(--muted); font-size: 13px; }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
+.status { margin: 0; font-size: 13px; color: var(--muted); }
+.status.err { color: var(--red-fg); background: var(--red-bg); padding: 8px 10px; border-radius: 6px; }
+.status b { color: var(--fg); font-weight: 600; }
+.rules { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: 10px 12px; align-items: center; }
+.rules .hd { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
+.chip { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+.chip.r { background: var(--red-bg); outline: 1px solid var(--red-fg); }
+.chip.g { background: var(--green-bg); outline: 1px solid var(--green-fg); }
+.rules label.m { font-weight: 500; }
+input[type="number"], input[type="text"], select {
+  width: 100%; min-width: 0; font: inherit; color: var(--fg); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px;
+}
+input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.opts { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; }
+.check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.check input { width: 16px; height: 16px; accent-color: var(--accent); }
+.hint { margin: 0; font-size: 13px; color: var(--muted); }
+button {
+  font: inherit; font-weight: 500; border-radius: 6px; padding: 9px 16px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--fg);
+}
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
+button:disabled { opacity: .55; cursor: default; }
+.row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.field > span { font-size: 12px; color: var(--muted); font-weight: 500; }
+.stage { overflow-x: auto; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+.stage canvas { display: block; max-width: none; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.out { margin: 0; font-size: 13px; color: var(--muted); min-height: 1.5em; }
+.fallback { display: none; }
+.fallback img { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; }
+@media (max-width: 520px) {
+  .rules { grid-template-columns: 1fr 1fr; }
+  .rules .hd.first, .rules .hd.spacer { display: none; }
+  .rules label.m { grid-column: 1 / -1; margin-top: 6px; }
+  .row { grid-template-columns: 1fr; }
+  h1 { font-size: 24px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* ---- tabs and Commission Packs tab ---- */
+.panel { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.packs { display: flex; flex-direction: column; gap: 10px; }
+.pack { border: 1px solid var(--line); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.pack-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: end; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.pchip { display: inline-flex; align-items: center; gap: 2px; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 2px 4px 2px 10px; font-size: 13px; max-width: 100%; }
+.pchip.miss { border-color: var(--red-fg); color: var(--red-fg); }
+.pchip button { border: none; background: none; color: inherit; padding: 0 6px; font-size: 16px; line-height: 1.2; border-radius: 50%; }
+.pack select { max-width: 340px; }
+.link { background: none; border: none; color: var(--accent); padding: 4px 2px; text-decoration: underline; }
+@media (max-width: 520px) { .pack-top { grid-template-columns: 1fr; } </style>
+
+
+<main class="wrap">
+  <div class="panel" id="p-com">
+    <header>
+      <p class="eyebrow">Outlet Wise Sale Report &middot; Pepsi portal file</p>
+      <h1>Commission Packs Report</h1>
+      <p class="lede">Upload the daily Outlet Wise Sale Report. The page builds the pivot from the Master Data sheet, adds up the pack groups and draws the report below.</p>
+    </header>
+
+    <section aria-labelledby="c-h-up">
+      <h2 id="c-h-up"><span class="n">1</span> Upload Excel file</h2>
+      <label class="drop" id="c-drop" for="c-file">
+        <strong>Tap to choose the file, or drop it here</strong>
+        <span>Outlet_Wise_Sale_Report_...xlsx from the portal</span>
+        <input id="c-file" type="file" accept=".xlsx,.xls">
+      </label>
+      <p class="status" id="c-status" aria-live="polite"></p>
+    </section>
+
+    <section aria-labelledby="c-h-packs">
+      <h2 id="c-h-packs"><span class="n">2</span> Pack columns</h2>
+      <p class="hint">Each column adds up the products listed in it. Change the name, remove a product with &times;, or add a product from the file.</p>
+      <div class="packs" id="c-packs"></div>
+      <div class="opts">
+        <button type="button" id="c-addcol">Add column</button>
+        <button type="button" id="c-reset">Reset to default columns</button>
+      </div>
+    </section>
+
+    <section aria-labelledby="c-h-prev">
+      <h2 id="c-h-prev"><span class="n">3</span> Report image</h2>
+      <div class="row">
+        <label class="field" for="c-title"><span>Heading in the image</span><input type="text" id="c-title" autocomplete="off" value="Commission Packs Report"></label>
+        <label class="field" for="c-size"><span>Image size</span>
+          <select id="c-size"><option value="1">Same size as screenshot</option><option value="2">2&times; sharper</option></select>
+        </label>
+      </div>
+      <div class="stage"><canvas id="c-cv" role="img" aria-label="Commission packs report preview"></canvas></div>
+      <div class="actions">
+        <button type="button" class="primary" id="c-gen">Generate image</button>
+        <button type="button" id="c-copy">Copy image</button>
+      </div>
+      <p class="out" id="c-out" aria-live="polite"></p>
+      <div class="fallback" id="c-fb"><p class="hint">Saving is not available in this view. Press and hold the image to save or share it.</p><img id="c-fbimg" alt="Generated commission packs report"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function norm(s) { return String(s == null ? '' : s).replace(/\s+/g, ' ').trim().toUpperCase(); }
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+  /* ---------- defaults and example data ---------- */
+  var DEFAULT_COLS = [
+    { label: '500 ML PET Sting', members: ['500 ML PET Sting-STING - BB'] },
+    { label: '300 ML PET-Revive', members: ['300 ML PET-Revive-LEMONADE TWIST', '300 ML PET-Revive-LYCHEE BURST'] },
+    { label: '1500 ML PET-7UP MINT', members: ['1500 ML PET-7UP MINT'] },
+    { label: 'Club (1.0 7up + 1.5 7up)', members: ['1000 ML PET-7-UP', '1500 ML PET-7-UP'] },
+    { label: 'Club (2.0 Pepsi + 2.0 7up)', members: ['2000 ML PET 6BT-7-UP', '2000 ML PET 6BT-PEPSI'] }
+  ];
+  var SAMPLE_PRODUCTS = ['1000 ML PET-7-UP', '1500 ML PET-7-UP', '1500 ML PET-7UP MINT', '2000 ML PET 6BT-7-UP', '2000 ML PET 6BT-PEPSI', '300 ML PET-Revive-LEMONADE TWIST', '300 ML PET-Revive-LYCHEE BURST', '500 ML PET Sting-STING - BB'];
+  var SAMPLE_ROWS = [
+    ['Benky Cheema', [42, 24, 2, 4, 13, 5, 2, 69]],
+    ['G.T Road (EAST SIDE)', [46, 28, 0, 4, 22, 10, 3, 91]],
+    ['G.T Road (WEST SIDE)', [93, 186, 17, 14, 46, 16, 9, 102]],
+    ['Sultan Pura', [44, 28, 1, 11, 26, 9, 6, 43]]
+  ];
+  function sampleData() {
+    var d = { sample: true, period: '01/11/2026-14/11/2026', iso: '2026-11-14', products: SAMPLE_PRODUCTS.slice(), rows: [], rowCount: 0 };
+    SAMPLE_ROWS.forEach(function (r) {
+      var q = {};
+      SAMPLE_PRODUCTS.forEach(function (p, i) { q[norm(p)] = r[1][i]; });
+      d.rows.push({ name: r[0], q: q });
+    });
+    return d;
+  }
+
+  var STORE = 'commission-cols-v1';
+  function loadCols() {
+    try {
+      var s = localStorage.getItem(STORE);
+      if (s) { var o = JSON.parse(s); if (Array.isArray(o) && o.length) return o; }
+    } catch (e) {}
+    return clone(DEFAULT_COLS);
+  }
+  function saveCols() { try { localStorage.setItem(STORE, JSON.stringify(cols)); } catch (e) {} }
+
+  var data = sampleData();
+  var cols = loadCols();
+
+  /* ---------- pack column editor ---------- */
+  function present(name) { return !!data.set[norm(name)]; }
+  function renderPacks() {
+    data.set = data.set || {};
+    data.products.forEach(function (p) { data.set[norm(p)] = true; });
+    var html = '';
+    cols.forEach(function (c, i) {
+      var used = {};
+      c.members.forEach(function (m) { used[norm(m)] = true; });
+      var chips = c.members.map(function (m, j) {
+        var miss = !present(m);
+        return '<span class="pchip' + (miss ? ' miss' : '') + '"' + (miss ? ' title="Not found in this file"' : '') + '>' + esc(m) +
+          '<button type="button" data-rm="' + i + ':' + j + '" aria-label="Remove ' + esc(m) + '">&times;</button></span>';
+      }).join('');
+      var opts = '<option value="">Add product...</option>' + data.products.filter(function (p) { return !used[norm(p)]; })
+        .map(function (p) { return '<option value="' + esc(p) + '">' + esc(p) + '</option>'; }).join('');
+      html += '<div class="pack">' +
+        '<div class="pack-top"><label class="field" for="c-label-' + i + '"><span>Column name</span><input type="text" id="c-label-' + i + '" data-label="' + i + '" value="' + esc(c.label) + '" autocomplete="off"></label>' +
+        '<button type="button" data-del="' + i + '">Remove column</button></div>' +
+        '<div class="chips">' + (chips || '<span class="hint">No products yet. This column will show 0.</span>') + '</div>' +
+        '<select id="c-add-' + i + '" data-add="' + i + '" aria-label="Add a product to ' + esc(c.label) + '">' + opts + '</select></div>';
+    });
+    $('c-packs').innerHTML = html;
+  }
+  $('c-packs').addEventListener('click', function (e) {
+    var t = e.target.closest('button'); if (!t) return;
+    if (t.dataset.rm) { var p = t.dataset.rm.split(':'); cols[+p[0]].members.splice(+p[1], 1); }
+    else if (t.dataset.del) { cols.splice(+t.dataset.del, 1); }
+    else return;
+    saveCols(); renderPacks(); draw();
+  });
+  $('c-packs').addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.dataset && t.dataset.add != null && t.value) { cols[+t.dataset.add].members.push(t.value); saveCols(); renderPacks(); draw(); }
+  });
+  $('c-packs').addEventListener('input', function (e) {
+    var t = e.target;
+    if (t.dataset && t.dataset.label != null) { cols[+t.dataset.label].label = t.value; saveCols(); draw(); }
+  });
+  $('c-addcol').addEventListener('click', function () { cols.push({ label: 'New column', members: [] }); saveCols(); renderPacks(); draw(); });
+  $('c-reset').addEventListener('click', function () { cols = clone(DEFAULT_COLS); saveCols(); renderPacks(); draw(); });
+
+  /* ---------- Excel reading ---------- */
+  function findHeader(aoa) {
+    for (var i = 0; i < Math.min(aoa.length, 30); i++) {
+      var cells = (aoa[i] || []).map(norm);
+      var a = cells.indexOf('PJP_NAME'), b = cells.indexOf('PRODUCT NAME'), c = cells.indexOf('SALES_RAW CASES');
+      if (a >= 0 && b >= 0 && c >= 0) return { row: i, pjp: a, prod: b, qty: c };
+    }
+    return null;
+  }
+  function parseBook(wb) {
+    var names = wb.SheetNames.slice().sort(function (x, y) { return (norm(y) === 'MASTER DATA') - (norm(x) === 'MASTER DATA'); });
+    for (var s = 0; s < names.length; s++) {
+      var aoa = XLSX.utils.sheet_to_json(wb.Sheets[names[s]], { header: 1, raw: true, defval: null });
+      var hd = findHeader(aoa);
+      if (!hd) continue;
+      var map = {}, order = [], prods = {}, n = 0, i;
+      for (i = hd.row + 1; i < aoa.length; i++) {
+        var r = aoa[i]; if (!r) continue;
+        var pjp = r[hd.pjp] == null ? '' : String(r[hd.pjp]).trim();
+        var pr = r[hd.prod] == null ? '' : String(r[hd.prod]).trim();
+        if (!pjp || !pr) continue;
+        var qty = Number(r[hd.qty]); if (isNaN(qty)) qty = 0;
+        if (!map[pjp]) { map[pjp] = { name: pjp, q: {} }; order.push(pjp); }
+        var k = norm(pr);
+        map[pjp].q[k] = (map[pjp].q[k] || 0) + qty;
+        if (!prods[k]) prods[k] = pr;
+        n++;
+      }
+      if (!n) continue;
+      var period = '', iso = '';
+      for (i = 0; i < hd.row; i++) {
+        var line = (aoa[i] || []).join(' ');
+        var m = line.match(/Period\s*:\s*(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2})\/(\d{2})\/(\d{4})/i);
+        if (m) { period = m[1] + '/' + m[2] + '/' + m[3] + '-' + m[4] + '/' + m[5] + '/' + m[6]; iso = m[6] + '-' + m[5] + '-' + m[4]; break; }
+      }
+      order.sort(function (a, b) { return a.localeCompare(b, 'en', { sensitivity: 'base' }); });
+      return {
+        sample: false, period: period, iso: iso, rowCount: n,
+        products: Object.keys(prods).map(function (k) { return prods[k]; }).sort(function (a, b) { return a.localeCompare(b, 'en', { sensitivity: 'base' }); }),
+        rows: order.map(function (p) { return map[p]; }), set: null
+      };
+    }
+    throw new Error('Could not find PJP_Name, Product NAME and Sales_Raw Cases columns. Is this the Outlet Wise Sale Report?');
+  }
+  function handleFile(file) {
+    if (!file) return;
+    var st = $('c-status');
+    st.className = 'status';
+    if (typeof XLSX === 'undefined') { st.className = 'status err'; st.textContent = 'The Excel reader did not load. Check the internet connection and reload the page.'; return; }
+    st.textContent = 'Reading ' + file.name + '...';
+    file.arrayBuffer().then(function (buf) {
+      var wb = XLSX.read(buf, { type: 'array', dense: false });
+      var d = parseBook(wb);
+      d.set = {};
+      d.products.forEach(function (p) { d.set[norm(p)] = true; });
+      data = d;
+      var missing = [];
+      cols.forEach(function (c) { c.members.forEach(function (m) { if (!d.set[norm(m)]) missing.push(m); }); });
+      var msg = '<b>' + esc(file.name) + '</b> loaded. ' + d.rows.length + ' PJPs, ' + d.rowCount.toLocaleString('en-US') + ' rows' + (d.period ? ', period ' + esc(d.period) : '') + '.';
+      if (missing.length) {
+        st.className = 'status err';
+        msg += ' These products are in your columns but not in this file, so they count as 0: ' + esc(missing.join(', ')) + '.';
+      }
+      st.innerHTML = msg;
+      renderPacks(); draw();
+    }).catch(function (e) {
+      st.className = 'status err';
+      st.textContent = (e && e.message) ? e.message : 'This file could not be read.';
+    });
+  }
+  $('c-file').addEventListener('change', function (e) { handleFile(e.target.files[0]); e.target.value = ''; });
+  var drop = $('c-drop');
+  ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); }); });
+  ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); }); });
+  drop.addEventListener('drop', function (e) { if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
+
+  /* ---------- table numbers ---------- */
+  function table() {
+    var rows = data.rows.map(function (r) {
+      return { name: r.name, v: cols.map(function (c) {
+        var t = 0; c.members.forEach(function (m) { t += r.q[norm(m)] || 0; }); return t;
+      }) };
+    });
+    var tot = cols.map(function (c, i) { return rows.reduce(function (a, r) { return a + r.v[i]; }, 0); });
+    return { rows: rows, total: tot };
+  }
+  function num(n) { return Math.round(n).toLocaleString('en-US'); }
+
+  /* ---------- drawing (same look as the Excel pivot screenshot) ---------- */
+  var REG = '15px Carlito, Calibri, Arial, sans-serif', BOLD = '700 15px Carlito, Calibri, Arial, sans-serif', TTL = '700 16px Carlito, Calibri, Arial, sans-serif';
+  var OX = 23, TY = 27, RH = 20, FILL = '#DDEBF7', GRID = '#A6A6A6', TITLE_C = '#002060';
+
+  function render(cv, scale) {
+    var T = table();
+    var mc = document.createElement('canvas').getContext('2d');
+    mc.font = BOLD;
+    var w0 = 140;
+    T.rows.forEach(function (r) { w0 = Math.max(w0, Math.ceil(mc.measureText(r.name).width) + 12); });
+    w0 = Math.max(w0, Math.ceil(mc.measureText('Grand Total').width) + 12);
+    var widths = [w0];
+    cols.forEach(function (c, i) {
+      var w = Math.ceil(mc.measureText(c.label || ' ').width) + 20;
+      T.rows.forEach(function (r) { w = Math.max(w, Math.ceil(mc.measureText(num(r.v[i])).width) + 20); });
+      widths.push(Math.max(w, 60));
+    });
+    var xs = [OX]; widths.forEach(function (w) { xs.push(xs[xs.length - 1] + w); });
+    var nrows = T.rows.length + 2;
+    var title = $('c-title').value;
+    mc.font = TTL;
+    var W = Math.max(xs[xs.length - 1] + 30, OX + 3 + Math.ceil(mc.measureText(title).width) + 30);
+    var H = TY + nrows * RH + 26;
+    cv.width = Math.round(W * scale); cv.height = Math.round(H * scale);
+    var c = cv.getContext('2d');
+    c.setTransform(scale, 0, 0, scale, 0, 0);
+    c.fillStyle = '#fff'; c.fillRect(0, 0, W, H);
+    c.textBaseline = 'middle';
+    c.fillStyle = TITLE_C; c.font = TTL; c.textAlign = 'left'; c.fillText(title, OX + 3, 16);
+    var right = xs[xs.length - 1], bottom = TY + nrows * RH;
+    c.fillStyle = FILL;
+    c.fillRect(OX, TY, right - OX, RH);
+    c.fillRect(OX, TY + (nrows - 1) * RH, right - OX, RH);
+    function cell(s, j, row, font, align) {
+      c.fillStyle = '#000'; c.font = font; c.textAlign = align;
+      var x = align === 'left' ? xs[j] + 4 : (xs[j] + xs[j + 1]) / 2;
+      c.fillText(s, x, TY + row * RH + RH / 2 + 1);
+    }
+    cell('Row Labels', 0, 0, BOLD, 'left');
+    cols.forEach(function (col, i) { cell(col.label, i + 1, 0, BOLD, 'center'); });
+    T.rows.forEach(function (r, k) {
+      cell(r.name, 0, k + 1, BOLD, 'left');
+      r.v.forEach(function (v, i) { cell(num(v), i + 1, k + 1, REG, 'center'); });
+    });
+    cell('Grand Total', 0, nrows - 1, BOLD, 'left');
+    T.total.forEach(function (v, i) { cell(num(v), i + 1, nrows - 1, BOLD, 'center'); });
+    c.strokeStyle = GRID; c.lineWidth = 1;
+    c.beginPath();
+    for (var i = 0; i <= nrows; i++) { c.moveTo(OX, TY + i * RH + 0.5); c.lineTo(right + 1, TY + i * RH + 0.5); }
+    for (var j = 0; j < xs.length; j++) { c.moveTo(xs[j] + 0.5, TY); c.lineTo(xs[j] + 0.5, bottom + 1); }
+    c.stroke();
+    return { W: W, H: H };
+  }
+
+  var cv = $('c-cv');
+  function draw() {
+    var L = render(cv, 2);
+    cv.style.width = L.W + 'px'; cv.style.height = L.H + 'px';
+  }
+  $('c-title').addEventListener('input', draw);
+
+  /* ---------- output ---------- */
+  function blobOf(scale) {
+    var off = document.createElement('canvas');
+    render(off, scale);
+    return new Promise(function (res, rej) {
+      off.toBlob(function (b) { b ? res(b) : rej(new Error('Image could not be created.')); }, 'image/png');
+    });
+  }
+  function fileName() { return 'Commission-Packs-' + (data.iso || new Date().toISOString().slice(0, 10)) + '.png'; }
+  function say(t) { $('c-out').textContent = t; }
+
+  $('c-gen').addEventListener('click', function () {
+    var scale = parseInt($('c-size').value, 10) || 1;
+    var btn = $('c-gen'); btn.disabled = true; say('Generating...');
+    $('c-fb').style.display = 'none';
+    blobOf(scale).then(function (blob) {
+      var tmp = new Image();
+      var url = URL.createObjectURL(blob);
+      tmp.onload = function () {
+        var dims = tmp.naturalWidth + ' × ' + tmp.naturalHeight + ' px';
+        var show = function () { $('c-fbimg').src = url; $('c-fb').style.display = 'block'; };
+        claude.use('downloads').then(function (d) {
+          if (!d) { say('Image ready (' + dims + ').'); show(); btn.disabled = false; return; }
+          d.save({ filename: fileName(), data: blob }).then(function () {
+            say('Saved ' + fileName() + ' (' + dims + ').'); btn.disabled = false;
+          }).catch(function (e) {
+            if (e && e.code === 'declined') say('Save cancelled. Press Generate image to try again.');
+            else { say('Image ready (' + dims + ').'); show(); }
+            btn.disabled = false;
+          });
+        }).catch(function () { say('Image ready (' + dims + ').'); show(); btn.disabled = false; });
+      };
+      tmp.src = url;
+    }).catch(function (e) { say(e.message || 'Image could not be created.'); btn.disabled = false; });
+  });
+  $('c-copy').addEventListener('click', function () {
+    var scale = parseInt($('c-size').value, 10) || 1;
+    if (!(navigator.clipboard && window.ClipboardItem)) { say('Copy is not available here. Use Generate image instead.'); return; }
+    blobOf(scale).then(function (blob) {
+      return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+    }).then(function () { say('Image copied. Paste it into WhatsApp or any chat.'); })
+      .catch(function () { say('Copy was blocked here. Use Generate image instead.'); });
+  });
+
+  /* ---------- start ---------- */
+  $('c-status').innerHTML = 'Showing <b>example data</b> from 01/11/2026-14/11/2026. Upload today’s file to replace it.';
+  renderPacks();
+  draw();
+  if (document.fonts && document.fonts.load) {
+    Promise.all([document.fonts.load('15px Carlito'), document.fonts.load('700 15px Carlito'), document.fonts.load('700 16px Carlito')]).then(draw).catch(function () {});
+  }
+})();
+</script>
+
+</body></html>
